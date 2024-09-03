@@ -1,10 +1,10 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"io"
 	"net"
-	"os"
 	"strings"
 	"time"
 )
@@ -12,12 +12,16 @@ import (
 const MAXDATASIZE = 10000
 
 func main() {
-	if len(os.Args) != 2 {
-		fmt.Println("Usage: go run main.go <hostname>")
+	userAgent := flag.String("a", "GolangHTTPClient/1.0", "Specify the User-Agent string")
+	flag.Parse()
+
+	args := flag.Args()
+	if len(args) != 1 {
+		fmt.Println("Usage: go run main.go [-a user-agent] <hostname>")
 		return
 	}
 
-	urlToGet := os.Args[1]
+	urlToGet := args[0]
 	hostname := strings.TrimPrefix(strings.TrimPrefix(urlToGet, "http://"), "https://")
 	hostname = strings.Split(hostname, "/")[0]
 
@@ -51,10 +55,10 @@ func main() {
 	sendBuff := fmt.Sprintf(
 		"GET / HTTP/1.1\r\n"+
 			"Host: %s\r\n"+
-			"User-Agent: GolangHTTPClient/1.0\r\n"+
+			"User-Agent: %s\r\n"+
 			"Accept: */*\r\n"+
 			"Connection: close\r\n"+
-			"\r\n", hostname)
+			"\r\n", hostname, *userAgent)
 
 	_, err = conn.Write([]byte(sendBuff))
 	if err != nil {
