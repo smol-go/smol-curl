@@ -37,6 +37,7 @@ func printFlagTable() {
 	fmt.Println("| -v                 | <bool>   | Make the request more detailed                   |")
 	fmt.Println("| -m                 | <int>    | Maximum time allowed for the operation in seconds|")
 	fmt.Println("| -D                 | <string> | Write the response headers to the specified file |")
+	fmt.Println("| -X                 | <string> | Specify custom request method                    |")
 	fmt.Println("| --cookie           | <string> | Send the specified cookies with the request      |")
 	fmt.Println("| --connect-timeout  | <int>    | Maximum time allowed for connection              |")
 	fmt.Println("------------------------------------------------------------------------------------")
@@ -50,6 +51,7 @@ func main() {
 	verbose := flag.Bool("v", false, "Make the request more detailed")
 	timeout := flag.Int("m", 0, "Maximum time allowed for the operation in seconds")
 	headerFile := flag.String("D", "", "Write the response headers to the specified file")
+	customMethod := flag.String("X", "", "Specify custom request method")
 	cookies := flag.String("cookie", "", "Send the specified cookies with the request")
 	connectTimeout := flag.Int("connect-timeout", 0, "Maximum time allowed for the connection to be established in seconds")
 
@@ -144,9 +146,15 @@ func main() {
 		conn.SetDeadline(time.Now().Add(time.Duration(*timeout) * time.Second))
 	}
 
-	method := "GET"
-	if *headRequest {
+	// Determine the HTTP method
+	var method string
+	switch {
+	case *customMethod != "":
+		method = strings.ToUpper(*customMethod)
+	case *headRequest:
 		method = "HEAD"
+	default:
+		method = "GET"
 	}
 
 	// Build the request headers
@@ -203,7 +211,7 @@ func main() {
 			}
 		}
 
-		if *headRequest {
+		if *headRequest || method == "HEAD" {
 			// If it's a HEAD request, break after reading the headers
 			if strings.Contains(response.String(), "\r\n\r\n") {
 				break
