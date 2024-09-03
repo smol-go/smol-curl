@@ -15,11 +15,12 @@ const MAXDATASIZE = 10000
 func main() {
 	userAgent := flag.String("a", "GolangHTTPClient/1.0", "Specify the User-Agent string")
 	certFile := flag.String("E", "", "Specify the client certificate file for HTTPS")
+	headRequest := flag.Bool("I", false, "Send HTTP HEAD request instead of GET")
 	flag.Parse()
 
 	args := flag.Args()
 	if len(args) != 1 {
-		fmt.Println("Usage: go run main.go [-a user-agent] <hostname>")
+		fmt.Println("Usage: ./main [-a user-agent] <hostname>")
 		return
 	}
 
@@ -50,14 +51,19 @@ func main() {
 				InsecureSkipVerify: true, // Note: This is not secure for production use
 			}
 			conn, err = tls.DialWithDialer(&net.Dialer{Timeout: 5 * time.Second}, "tcp", net.JoinHostPort(addr, "443"), config)
+			if err != nil {
+				fmt.Printf("Connection failed: %s\n", addr)
+				fmt.Printf("Reason: %s\n", err)
+				continue
+			}
 		} else {
 			// Use regular TCP connection if no certificate is provided
 			conn, err = net.DialTimeout("tcp", net.JoinHostPort(addr, "80"), 5*time.Second)
-		}
-		if err != nil {
-			fmt.Printf("Connection failed: %s\n", addr)
-			fmt.Printf("Reason: %s\n", err)
-			continue
+			if err != nil {
+				fmt.Printf("Connection failed: %s\n", addr)
+				fmt.Printf("Reason: %s\n", err)
+				continue
+			}
 		}
 		fmt.Printf("Connected to %s\n", addr)
 		break
@@ -69,13 +75,18 @@ func main() {
 	}
 	defer conn.Close()
 
+	method := "GET"
+	if *headRequest {
+		method = "HEAD"
+	}
+
 	sendBuff := fmt.Sprintf(
-		"GET / HTTP/1.1\r\n"+
+		"%s / HTTP/1.1\r\n"+
 			"Host: %s\r\n"+
 			"User-Agent: %s\r\n"+
 			"Accept: */*\r\n"+
 			"Connection: close\r\n"+
-			"\r\n", hostname, *userAgent)
+			"\r\n", method, hostname, *userAgent)
 
 	_, err = conn.Write([]byte(sendBuff))
 	if err != nil {
@@ -94,6 +105,13 @@ func main() {
 			break
 		}
 		response.Write(recvBuff[:bytesRecvd])
+
+		if *headRequest {
+			// If it's a HEAD request, break after reading the headers
+			if strings.Contains(response.String(), "\r\n\r\n") {
+				break
+			}
+		}
 	}
 
 	fmt.Println("Received:")
