@@ -6,11 +6,23 @@ import (
 	"fmt"
 	"io"
 	"net"
+	"os"
 	"strings"
 	"time"
 )
 
 const MAXDATASIZE = 10000
+
+func writeHeadersToFile(filename, headers string) error {
+	file, err := os.Create(filename)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+
+	_, err = file.WriteString(headers)
+	return err
+}
 
 func main() {
 	userAgent := flag.String("a", "GolangHTTPClient/1.0", "Specify the User-Agent string")
@@ -20,6 +32,7 @@ func main() {
 	verbose := flag.Bool("v", false, "Make the request more detailed")
 	timeout := flag.Int("m", 0, "Maximum time allowed for the operation in seconds")
 	connectTimeout := flag.Int("connect-timeout", 0, "Maximum time allowed for the connection to be established in seconds")
+	headerFile := flag.String("D", "", "Write the response headers to the specified file")
 	flag.Parse()
 
 	args := flag.Args()
@@ -134,6 +147,7 @@ func main() {
 
 	var response strings.Builder
 	recvBuff := make([]byte, MAXDATASIZE)
+	headersCaptured := false
 	for {
 		bytesRecvd, err := conn.Read(recvBuff)
 		if err != nil {
@@ -143,6 +157,21 @@ func main() {
 			break
 		}
 		response.Write(recvBuff[:bytesRecvd])
+
+		if !headersCaptured && *headerFile != "" {
+			headersEnd := strings.Index(response.String(), "\r\n\r\n")
+			if headersEnd != -1 {
+				headersCaptured = true
+				headers := response.String()[:headersEnd+4]
+
+				err := writeHeadersToFile(*headerFile, headers)
+				if err != nil {
+					fmt.Printf("Failed to write headers to file: %s\n", err)
+				} else if *verbose {
+					fmt.Printf("Headers written to %s\n", *headerFile)
+				}
+			}
+		}
 
 		if *headRequest {
 			// If it's a HEAD request, break after reading the headers
