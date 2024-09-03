@@ -21,12 +21,12 @@ default
 ./main https://www.keycdn.com
 ```
 
--A
+-a
 ```
 ./main -A "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36" https://www.keycdn.com
 ```
 
--E
+-e
 ```
 ./main -E client.pem https://www.keycdn.com
 ```
@@ -36,9 +36,9 @@ default
 ./main -I https://www.keycdn.com
 ```
 
--K
+-k
 ```
-./main -K https://www.keycdn.com
+./main -k https://www.keycdn.com
 ```
 
 -O

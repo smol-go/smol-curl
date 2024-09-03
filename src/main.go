@@ -13,10 +13,10 @@ import (
 const MAXDATASIZE = 10000
 
 func main() {
-	userAgent := flag.String("A", "GolangHTTPClient/1.0", "Specify the User-Agent string")
-	certFile := flag.String("E", "", "Specify the client certificate file for HTTPS")
+	userAgent := flag.String("a", "GolangHTTPClient/1.0", "Specify the User-Agent string")
+	certFile := flag.String("e", "", "Specify the client certificate file for HTTPS")
 	headRequest := flag.Bool("I", false, "Send HTTP HEAD request instead of GET")
-	insecure := flag.Bool("K", false, "Allow insecure server connections when using SSL")
+	insecure := flag.Bool("k", false, "Allow insecure server connections when using SSL")
 	flag.Parse()
 
 	args := flag.Args()
