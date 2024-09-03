@@ -13,9 +13,10 @@ import (
 const MAXDATASIZE = 10000
 
 func main() {
-	userAgent := flag.String("a", "GolangHTTPClient/1.0", "Specify the User-Agent string")
+	userAgent := flag.String("A", "GolangHTTPClient/1.0", "Specify the User-Agent string")
 	certFile := flag.String("E", "", "Specify the client certificate file for HTTPS")
 	headRequest := flag.Bool("I", false, "Send HTTP HEAD request instead of GET")
+	insecure := flag.Bool("K", false, "Allow insecure server connections when using SSL")
 	flag.Parse()
 
 	args := flag.Args()
@@ -39,17 +40,21 @@ func main() {
 	var conn net.Conn
 	for _, addr := range addrs {
 		fmt.Println("Trying address:", addr)
-		if *certFile != "" {
-			// If a certificate file is provided, use TLS
-			cert, err := tls.LoadX509KeyPair(*certFile, *certFile)
-			if err != nil {
-				fmt.Printf("Error loading client certificate: %s\n", err)
-				return
-			}
+		if *certFile != "" || *insecure {
+			// If a certificate file is provided, use TLS, or if -k is used
 			config := &tls.Config{
-				Certificates:       []tls.Certificate{cert},
-				InsecureSkipVerify: true, // Note: This is not secure for production use
+				InsecureSkipVerify: *insecure, // This corresponds to the -k flag
 			}
+
+			if *certFile != "" {
+				cert, err := tls.LoadX509KeyPair(*certFile, *certFile)
+				if err != nil {
+					fmt.Printf("Error loading client certificate: %s\n", err)
+					return
+				}
+				config.Certificates = []tls.Certificate{cert}
+			}
+
 			conn, err = tls.DialWithDialer(&net.Dialer{Timeout: 5 * time.Second}, "tcp", net.JoinHostPort(addr, "443"), config)
 			if err != nil {
 				fmt.Printf("Connection failed: %s\n", addr)
