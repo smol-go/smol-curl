@@ -14,15 +14,16 @@ const MAXDATASIZE = 10000
 
 func main() {
 	userAgent := flag.String("a", "GolangHTTPClient/1.0", "Specify the User-Agent string")
-	certFile := flag.String("e", "", "Specify the client certificate file for HTTPS")
+	certFile := flag.String("E", "", "Specify the client certificate file for HTTPS")
 	headRequest := flag.Bool("I", false, "Send HTTP HEAD request instead of GET")
 	insecure := flag.Bool("k", false, "Allow insecure server connections when using SSL")
 	verbose := flag.Bool("v", false, "Make the request more detailed")
+	timeout := flag.Int("m", 0, "Maximum time allowed for the operation in seconds")
 	flag.Parse()
 
 	args := flag.Args()
 	if len(args) != 1 {
-		fmt.Println("Usage: ./main [-a user-agent] <hostname>")
+		fmt.Println("Usage: ./main [options] <hostname>")
 		return
 	}
 
@@ -45,6 +46,16 @@ func main() {
 		if *verbose {
 			fmt.Println("Trying address:", addr)
 		}
+
+		// Set up timeout for the entire connection
+		dialer := &net.Dialer{
+			Timeout: 5 * time.Second,
+		}
+
+		if *timeout > 0 {
+			dialer.Deadline = time.Now().Add(time.Duration(*timeout) * time.Second)
+		}
+
 		if *certFile != "" || *insecure {
 			// If a certificate file is provided, use TLS, or if -k is used
 			config := &tls.Config{
@@ -60,7 +71,7 @@ func main() {
 				config.Certificates = []tls.Certificate{cert}
 			}
 
-			conn, err = tls.DialWithDialer(&net.Dialer{Timeout: 5 * time.Second}, "tcp", net.JoinHostPort(addr, "443"), config)
+			conn, err = tls.DialWithDialer(dialer, "tcp", net.JoinHostPort(addr, "443"), config)
 			if err != nil {
 				fmt.Printf("Connection failed: %s\n", addr)
 				fmt.Printf("Reason: %s\n", err)
@@ -86,6 +97,11 @@ func main() {
 		return
 	}
 	defer conn.Close()
+
+	// Set a deadline for the entire operation if the -m flag is used
+	if *timeout > 0 {
+		conn.SetDeadline(time.Now().Add(time.Duration(*timeout) * time.Second))
+	}
 
 	method := "GET"
 	if *headRequest {
