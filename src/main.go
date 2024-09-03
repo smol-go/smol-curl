@@ -19,6 +19,7 @@ func main() {
 	insecure := flag.Bool("k", false, "Allow insecure server connections when using SSL")
 	verbose := flag.Bool("v", false, "Make the request more detailed")
 	timeout := flag.Int("m", 0, "Maximum time allowed for the operation in seconds")
+	connectTimeout := flag.Int("connect-timeout", 0, "Maximum time allowed for the connection to be established in seconds")
 	flag.Parse()
 
 	args := flag.Args()
@@ -47,9 +48,13 @@ func main() {
 			fmt.Println("Trying address:", addr)
 		}
 
-		// Set up timeout for the entire connection
+		// Set up connection timeout
 		dialer := &net.Dialer{
 			Timeout: 5 * time.Second,
+		}
+
+		if *connectTimeout > 0 {
+			dialer.Timeout = time.Duration(*connectTimeout) * time.Second
 		}
 
 		if *timeout > 0 {
