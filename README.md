@@ -14,3 +14,26 @@ openssl x509 -req -days 365 -in client-req.pem -signkey client-key.pem -out clie
 # Combine key and certificate into a single file
 cat client-key.pem client-cert.pem > client.pem
 ```
+
+### tests to try out different flags
+- default
+```
+./main https://www.keycdn.com
+```
+
+- -a
+```
+./main -a "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36" https://www.keycdn.com
+```
+
+- -E
+```
+./main -E client.pem https://www.keycdn.com
+```
+
+- -O
+```
+./main -O https://nodejs.org/dist/v18.17.0/node-v18.17.0-linux-x64.tar.xz
+tar -xf node-v18.17.0-linux-x64.tar.xz
+ls node-v18.17.0-linux-x64/
+```
