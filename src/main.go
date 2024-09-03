@@ -13,6 +13,17 @@ import (
 
 const MAXDATASIZE = 10000
 
+const (
+	colorReset  = "\033[0m"
+	colorRed    = "\033[31m"
+	colorGreen  = "\033[32m"
+	colorYellow = "\033[33m"
+	colorBlue   = "\033[34m"
+	colorPurple = "\033[35m"
+	colorCyan   = "\033[36m"
+	colorWhite  = "\033[37m"
+)
+
 func writeHeadersToFile(filename, headers string) error {
 	file, err := os.Create(filename)
 	if err != nil {
@@ -24,23 +35,64 @@ func writeHeadersToFile(filename, headers string) error {
 	return err
 }
 
+func padRight(s string, n int) string {
+	if len(s) >= n {
+		return s
+	}
+	return s + strings.Repeat(" ", n-len(s))
+}
+
 func printFlagTable() {
-	fmt.Println("Usage: ./main [options] <hostname>")
-	fmt.Println("Options:")
-	fmt.Println("------------------------------------------------------------------------------------")
-	fmt.Println("| Flag               | Type     | Description                                      |")
-	fmt.Println("------------------------------------------------------------------------------------")
-	fmt.Println("| -a                 | <string> | Specify the User-Agent string                    |")
-	fmt.Println("| -E                 | <string> | Specify the client certificate file for HTTPS    |")
-	fmt.Println("| -I                 | <bool>   | Send HTTP HEAD request instead of GET            |")
-	fmt.Println("| -k                 | <bool>   | Allow insecure server connections when using SSL |")
-	fmt.Println("| -v                 | <bool>   | Make the request more detailed                   |")
-	fmt.Println("| -m                 | <int>    | Maximum time allowed for the operation in seconds|")
-	fmt.Println("| -D                 | <string> | Write the response headers to the specified file |")
-	fmt.Println("| -X                 | <string> | Specify custom request method                    |")
-	fmt.Println("| --cookie           | <string> | Send the specified cookies with the request      |")
-	fmt.Println("| --connect-timeout  | <int>    | Maximum time allowed for connection              |")
-	fmt.Println("------------------------------------------------------------------------------------")
+	logo := `
+███████╗███╗   ███╗ ██████╗ ██╗      ██████╗██╗   ██╗██████╗ ██╗     
+██╔════╝████╗ ████║██╔═══██╗██║     ██╔════╝██║   ██║██╔══██╗██║     
+███████╗██╔████╔██║██║   ██║██║     ██║     ██║   ██║██████╔╝██║     
+╚════██║██║╚██╔╝██║██║   ██║██║     ██║     ██║   ██║██╔══██╗██║     
+███████║██║ ╚═╝ ██║╚██████╔╝███████╗╚██████╗╚██████╔╝██║  ██║███████╗
+╚══════╝╚═╝     ╚═╝ ╚═════╝ ╚══════╝ ╚═════╝ ╚═════╝ ╚═╝  ╚═╝╚══════╝
+`
+
+	fmt.Print(colorCyan, logo, colorReset)
+
+	fmt.Println(colorYellow, "Usage: ./main [options] <hostname>", colorReset)
+	fmt.Println(colorGreen, "Options:", colorReset)
+
+	table := [][]string{
+		{"Flag", "Type", "Description"},
+		{"-a", "<string>", "Specify the User-Agent string"},
+		{"-E", "<string>", "Specify the client certificate file for HTTPS"},
+		{"-I", "<bool>", "Send HTTP HEAD request instead of GET"},
+		{"-k", "<bool>", "Allow insecure server connections when using SSL"},
+		{"-v", "<bool>", "Make the request more detailed"},
+		{"-m", "<int>", "Maximum time allowed for the operation in seconds"},
+		{"-D", "<string>", "Write the response headers to the specified file"},
+		{"-X", "<string>", "Specify custom request method"},
+		{"--cookie", "<string>", "Send the specified cookies with the request"},
+		{"--connect-timeout", "<int>", "Maximum time allowed for connection"},
+	}
+
+	columnWidths := []int{20, 10, 50}
+	for i, row := range table {
+		for j, cell := range row {
+			if i == 0 {
+				fmt.Print(colorPurple, padRight(cell, columnWidths[j]), colorReset)
+			} else {
+				switch j {
+				case 0:
+					fmt.Print(colorBlue, padRight(cell, columnWidths[j]), colorReset)
+				case 1:
+					fmt.Print(colorRed, padRight(cell, columnWidths[j]), colorReset)
+				default:
+					fmt.Print(padRight(cell, columnWidths[j]))
+				}
+			}
+			fmt.Print(" | ")
+		}
+		fmt.Println()
+		if i == 0 {
+			fmt.Println(strings.Repeat("-", 85))
+		}
+	}
 }
 
 func main() {
