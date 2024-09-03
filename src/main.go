@@ -24,6 +24,24 @@ func writeHeadersToFile(filename, headers string) error {
 	return err
 }
 
+func printFlagTable() {
+	fmt.Println("Usage: ./main [options] <hostname>")
+	fmt.Println("Options:")
+	fmt.Println("------------------------------------------------------------------------------------")
+	fmt.Println("| Flag               | Type     | Description                                      |")
+	fmt.Println("------------------------------------------------------------------------------------")
+	fmt.Println("| -a                 | <string> | Specify the User-Agent string                    |")
+	fmt.Println("| -E                 | <string> | Specify the client certificate file for HTTPS    |")
+	fmt.Println("| -I                 | <bool>   | Send HTTP HEAD request instead of GET            |")
+	fmt.Println("| -k                 | <bool>   | Allow insecure server connections when using SSL |")
+	fmt.Println("| -v                 | <bool>   | Make the request more detailed                   |")
+	fmt.Println("| -m                 | <int>    | Maximum time allowed for the operation in seconds|")
+	fmt.Println("| --connect-timeout  | <int>    | Maximum time allowed for connection              |")
+	fmt.Println("| -D                 | <string> | Write the response headers to the specified file |")
+	fmt.Println("| --cookie           | <string> | Send the specified cookies with the request      |")
+	fmt.Println("------------------------------------------------------------------------------------")
+}
+
 func main() {
 	userAgent := flag.String("a", "GolangHTTPClient/1.0", "Specify the User-Agent string")
 	certFile := flag.String("E", "", "Specify the client certificate file for HTTPS")
@@ -34,11 +52,15 @@ func main() {
 	connectTimeout := flag.Int("connect-timeout", 0, "Maximum time allowed for the connection to be established in seconds")
 	headerFile := flag.String("D", "", "Write the response headers to the specified file")
 	cookies := flag.String("cookie", "", "Send the specified cookies with the request")
+
+	// Custom usage message
+	flag.Usage = printFlagTable
+
 	flag.Parse()
 
 	args := flag.Args()
 	if len(args) != 1 {
-		fmt.Println("Usage: ./main [options] <hostname>")
+		flag.Usage()
 		return
 	}
 
