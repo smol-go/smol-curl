@@ -1,6 +1,7 @@
 package main
 
 import (
+	"crypto/tls"
 	"flag"
 	"fmt"
 	"io"
@@ -13,6 +14,7 @@ const MAXDATASIZE = 10000
 
 func main() {
 	userAgent := flag.String("a", "GolangHTTPClient/1.0", "Specify the User-Agent string")
+	certFile := flag.String("E", "", "Specify the client certificate file for HTTPS")
 	flag.Parse()
 
 	args := flag.Args()
@@ -36,7 +38,22 @@ func main() {
 	var conn net.Conn
 	for _, addr := range addrs {
 		fmt.Println("Trying address:", addr)
-		conn, err = net.DialTimeout("tcp", net.JoinHostPort(addr, "80"), 5*time.Second)
+		if *certFile != "" {
+			// If a certificate file is provided, use TLS
+			cert, err := tls.LoadX509KeyPair(*certFile, *certFile)
+			if err != nil {
+				fmt.Printf("Error loading client certificate: %s\n", err)
+				return
+			}
+			config := &tls.Config{
+				Certificates:       []tls.Certificate{cert},
+				InsecureSkipVerify: true, // Note: This is not secure for production use
+			}
+			conn, err = tls.DialWithDialer(&net.Dialer{Timeout: 5 * time.Second}, "tcp", net.JoinHostPort(addr, "443"), config)
+		} else {
+			// Use regular TCP connection if no certificate is provided
+			conn, err = net.DialTimeout("tcp", net.JoinHostPort(addr, "80"), 5*time.Second)
+		}
 		if err != nil {
 			fmt.Printf("Connection failed: %s\n", addr)
 			fmt.Printf("Reason: %s\n", err)

@@ -1,2 +1,8 @@
 main
 main.exe
+
+# certificates
+client-cert.pem
+client-key.pem
+client-req.pem
+client.pem
