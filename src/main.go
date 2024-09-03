@@ -36,9 +36,9 @@ func printFlagTable() {
 	fmt.Println("| -k                 | <bool>   | Allow insecure server connections when using SSL |")
 	fmt.Println("| -v                 | <bool>   | Make the request more detailed                   |")
 	fmt.Println("| -m                 | <int>    | Maximum time allowed for the operation in seconds|")
-	fmt.Println("| --connect-timeout  | <int>    | Maximum time allowed for connection              |")
 	fmt.Println("| -D                 | <string> | Write the response headers to the specified file |")
 	fmt.Println("| --cookie           | <string> | Send the specified cookies with the request      |")
+	fmt.Println("| --connect-timeout  | <int>    | Maximum time allowed for connection              |")
 	fmt.Println("------------------------------------------------------------------------------------")
 }
 
@@ -49,9 +49,9 @@ func main() {
 	insecure := flag.Bool("k", false, "Allow insecure server connections when using SSL")
 	verbose := flag.Bool("v", false, "Make the request more detailed")
 	timeout := flag.Int("m", 0, "Maximum time allowed for the operation in seconds")
-	connectTimeout := flag.Int("connect-timeout", 0, "Maximum time allowed for the connection to be established in seconds")
 	headerFile := flag.String("D", "", "Write the response headers to the specified file")
 	cookies := flag.String("cookie", "", "Send the specified cookies with the request")
+	connectTimeout := flag.Int("connect-timeout", 0, "Maximum time allowed for the connection to be established in seconds")
 
 	// Custom usage message
 	flag.Usage = printFlagTable
