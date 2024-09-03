@@ -1,5 +1,7 @@
 A minimal clone of cURL
 
+### generate certificates required for -E flag
+```
 # Generate a private key
 openssl genpkey -algorithm RSA -out client-key.pem
 
@@ -11,3 +13,4 @@ openssl x509 -req -days 365 -in client-req.pem -signkey client-key.pem -out clie
 
 # Combine key and certificate into a single file
 cat client-key.pem client-cert.pem > client.pem
+```
