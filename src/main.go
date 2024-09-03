@@ -17,6 +17,7 @@ func main() {
 	certFile := flag.String("e", "", "Specify the client certificate file for HTTPS")
 	headRequest := flag.Bool("I", false, "Send HTTP HEAD request instead of GET")
 	insecure := flag.Bool("k", false, "Allow insecure server connections when using SSL")
+	verbose := flag.Bool("v", false, "Make the request more detailed")
 	flag.Parse()
 
 	args := flag.Args()
@@ -29,7 +30,9 @@ func main() {
 	hostname := strings.TrimPrefix(strings.TrimPrefix(urlToGet, "http://"), "https://")
 	hostname = strings.Split(hostname, "/")[0]
 
-	fmt.Printf("Fetching %s ...\n", hostname)
+	if *verbose {
+		fmt.Printf("Fetching %s ...\n", hostname)
+	}
 
 	addrs, err := net.LookupHost(hostname)
 	if err != nil {
@@ -39,7 +42,9 @@ func main() {
 
 	var conn net.Conn
 	for _, addr := range addrs {
-		fmt.Println("Trying address:", addr)
+		if *verbose {
+			fmt.Println("Trying address:", addr)
+		}
 		if *certFile != "" || *insecure {
 			// If a certificate file is provided, use TLS, or if -k is used
 			config := &tls.Config{
@@ -62,7 +67,7 @@ func main() {
 				continue
 			}
 		} else {
-			// Use regular TCP connection if no certificate is provided
+			// Use regular TCP connection if no certificate is provided and -k is not used
 			conn, err = net.DialTimeout("tcp", net.JoinHostPort(addr, "80"), 5*time.Second)
 			if err != nil {
 				fmt.Printf("Connection failed: %s\n", addr)
@@ -70,7 +75,9 @@ func main() {
 				continue
 			}
 		}
-		fmt.Printf("Connected to %s\n", addr)
+		if *verbose {
+			fmt.Printf("Connected to %s\n", addr)
+		}
 		break
 	}
 
@@ -92,6 +99,11 @@ func main() {
 			"Accept: */*\r\n"+
 			"Connection: close\r\n"+
 			"\r\n", method, hostname, *userAgent)
+
+	if *verbose {
+		fmt.Println("Sending request:")
+		fmt.Println(sendBuff)
+	}
 
 	_, err = conn.Write([]byte(sendBuff))
 	if err != nil {
@@ -119,7 +131,9 @@ func main() {
 		}
 	}
 
-	fmt.Println("Received:")
+	if *verbose {
+		fmt.Println("Received response:")
+	}
 	fmt.Println(response.String())
 	fmt.Println(strings.Repeat("-", 50))
 }
