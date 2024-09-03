@@ -33,6 +33,7 @@ func main() {
 	timeout := flag.Int("m", 0, "Maximum time allowed for the operation in seconds")
 	connectTimeout := flag.Int("connect-timeout", 0, "Maximum time allowed for the connection to be established in seconds")
 	headerFile := flag.String("D", "", "Write the response headers to the specified file")
+	cookies := flag.String("cookie", "", "Send the specified cookies with the request")
 	flag.Parse()
 
 	args := flag.Args()
@@ -126,20 +127,27 @@ func main() {
 		method = "HEAD"
 	}
 
-	sendBuff := fmt.Sprintf(
+	// Build the request headers
+	requestHeaders := fmt.Sprintf(
 		"%s / HTTP/1.1\r\n"+
 			"Host: %s\r\n"+
 			"User-Agent: %s\r\n"+
-			"Accept: */*\r\n"+
-			"Connection: close\r\n"+
-			"\r\n", method, hostname, *userAgent)
+			"Accept: */*\r\n", method, hostname, *userAgent)
+
+	// Add cookies if provided
+	if *cookies != "" {
+		requestHeaders += fmt.Sprintf("Cookie: %s\r\n", *cookies)
+	}
+
+	// Close the connection
+	requestHeaders += "Connection: close\r\n\r\n"
 
 	if *verbose {
 		fmt.Println("Sending request:")
-		fmt.Println(sendBuff)
+		fmt.Println(requestHeaders)
 	}
 
-	_, err = conn.Write([]byte(sendBuff))
+	_, err = conn.Write([]byte(requestHeaders))
 	if err != nil {
 		fmt.Println("Failed to send request:", err)
 		return
