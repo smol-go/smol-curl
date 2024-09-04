@@ -1,5 +1,7 @@
 A minimal clone of cURL
 
+![smol-curl](./smol-curl.png)
+
 ### Installation
 
 To build the program, use the following command:
