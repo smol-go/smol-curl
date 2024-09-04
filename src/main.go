@@ -2,6 +2,7 @@ package main
 
 import (
 	"crypto/tls"
+	"encoding/base64"
 	"flag"
 	"fmt"
 	"io"
@@ -46,12 +47,12 @@ func padRight(s string, n int) string {
 
 func printFlagTable() {
 	logo := `
-███████╗███╗   ███╗ ██████╗ ██╗      ██████╗██╗   ██╗██████╗ ██╗     
-██╔════╝████╗ ████║██╔═══██╗██║     ██╔════╝██║   ██║██╔══██╗██║     
-███████╗██╔████╔██║██║   ██║██║     ██║     ██║   ██║██████╔╝██║     
-╚════██║██║╚██╔╝██║██║   ██║██║     ██║     ██║   ██║██╔══██╗██║     
-███████║██║ ╚═╝ ██║╚██████╔╝███████╗╚██████╗╚██████╔╝██║  ██║███████╗
-╚══════╝╚═╝     ╚═╝ ╚═════╝ ╚══════╝ ╚═════╝ ╚═════╝ ╚═╝  ╚═╝╚══════╝
+███████╗███╗   ███╗ ██████╗ ██╗       ██████╗██╗   ██╗██████╗ ██╗     
+██╔════╝████╗ ████║██╔═══██╗██║      ██╔════╝██║   ██║██╔══██╗██║     
+███████╗██╔████╔██║██║   ██║██║█████╗██║     ██║   ██║██████╔╝██║     
+╚════██║██║╚██╔╝██║██║   ██║██║╚════╝██║     ██║   ██║██╔══██╗██║     
+███████║██║ ╚═╝ ██║╚██████╔╝███████╗ ╚██████╗╚██████╔╝██║  ██║███████╗
+╚══════╝╚═╝     ╚═╝ ╚═════╝ ╚══════╝  ╚═════╝ ╚═════╝ ╚═╝  ╚═╝╚══════╝
 `
 
 	fmt.Print(colorCyan, logo, colorReset)
@@ -67,6 +68,7 @@ func printFlagTable() {
 		{"-k", "<bool>", "Allow insecure server connections when using SSL"},
 		{"-v", "<bool>", "Make the request more detailed"},
 		{"-m", "<int>", "Maximum time allowed for the operation in seconds"},
+		{"-u", "<string>", "Specify the user name and password for server authentication"},
 		{"-D", "<string>", "Write the response headers to the specified file"},
 		{"-X", "<string>", "Specify custom request method"},
 		{"-H", "<string>", "Pass custom header(s) to server"},
@@ -114,6 +116,7 @@ func main() {
 	insecure := flag.Bool("k", false, "Allow insecure server connections when using SSL")
 	verbose := flag.Bool("v", false, "Make the request more detailed")
 	timeout := flag.Int("m", 0, "Maximum time allowed for the operation in seconds")
+	userAuth := flag.String("u", "", "Specify the user name and password for server authentication")
 	headerFile := flag.String("D", "", "Write the response headers to the specified file")
 	customMethod := flag.String("X", "", "Specify custom request method")
 	var headers stringSliceFlag
@@ -238,6 +241,12 @@ func main() {
 	// Add custom headers
 	for _, header := range headers {
 		requestHeaders += fmt.Sprintf("%s\r\n", header)
+	}
+
+	// Add authentication header if -u flag is used
+	if *userAuth != "" {
+		authHeader := fmt.Sprintf("Authorization: Basic %s", base64.StdEncoding.EncodeToString([]byte(*userAuth)))
+		requestHeaders += fmt.Sprintf("%s\r\n", authHeader)
 	}
 
 	// Close the connection
