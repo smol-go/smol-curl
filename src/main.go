@@ -1,13 +1,16 @@
 package main
 
 import (
+	"bytes"
 	"crypto/tls"
 	"encoding/base64"
 	"flag"
 	"fmt"
 	"io"
+	"mime/multipart"
 	"net"
 	"os"
+	"path/filepath"
 	"strings"
 	"time"
 )
@@ -24,6 +27,12 @@ const (
 	colorCyan   = "\033[36m"
 	colorWhite  = "\033[37m"
 )
+
+type formData struct {
+	name     string
+	value    string
+	filename string
+}
 
 type stringSliceFlag []string
 
@@ -71,7 +80,8 @@ func printFlagTable() {
 		{"-u", "<string>", "Specify the user name and password for server authentication"},
 		{"-D", "<string>", "Write the response headers to the specified file"},
 		{"-X", "<string>", "Specify custom request method"},
-		{"-H", "<string>", "Pass custom header(s) to server"},
+		{"-H", "<string[]>", "Pass custom header(s) to server"},
+		{"-F", "<string[]>", "Specify HTTP multipart POST data"},
 		{"--cookie", "<string>", "Send the specified cookies with the request"},
 		{"--connect-timeout", "<int>", "Maximum time allowed for connection"},
 	}
@@ -109,6 +119,48 @@ func (s *stringSliceFlag) Set(value string) error {
 	return nil
 }
 
+func createMultipartFormData(formParams []formData) (bytes.Buffer, string, error) {
+	var b bytes.Buffer
+	w := multipart.NewWriter(&b)
+
+	for _, param := range formParams {
+		var fw io.Writer
+		var err error
+
+		if param.filename != "" {
+			fw, err = w.CreateFormFile(param.name, filepath.Base(param.filename))
+			if err != nil {
+				return bytes.Buffer{}, "", err
+			}
+
+			file, err := os.Open(param.filename)
+			if err != nil {
+				return bytes.Buffer{}, "", err
+			}
+			defer file.Close()
+
+			_, err = io.Copy(fw, file)
+			if err != nil {
+				return bytes.Buffer{}, "", err
+			}
+		} else {
+			fw, err = w.CreateFormField(param.name)
+			if err != nil {
+				return bytes.Buffer{}, "", err
+			}
+
+			_, err = fw.Write([]byte(param.value))
+			if err != nil {
+				return bytes.Buffer{}, "", err
+			}
+		}
+	}
+
+	w.Close()
+
+	return b, w.FormDataContentType(), nil
+}
+
 func main() {
 	userAgent := flag.String("a", "GolangHTTPClient/1.0", "Specify the User-Agent string")
 	certFile := flag.String("E", "", "Specify the client certificate file for HTTPS")
@@ -121,6 +173,8 @@ func main() {
 	customMethod := flag.String("X", "", "Specify custom request method")
 	var headers stringSliceFlag
 	flag.Var(&headers, "H", "Pass custom header(s) to server")
+	var formParams stringSliceFlag
+	flag.Var(&formParams, "F", "Specify HTTP multipart POST data")
 	cookies := flag.String("cookie", "", "Send the specified cookies with the request")
 	connectTimeout := flag.Int("connect-timeout", 0, "Maximum time allowed for the connection to be established in seconds")
 
@@ -216,14 +270,42 @@ func main() {
 	}
 
 	// Determine the HTTP method
-	var method string
-	switch {
-	case *customMethod != "":
+	method := "GET"
+	if *customMethod != "" {
 		method = strings.ToUpper(*customMethod)
-	case *headRequest:
+	} else if *headRequest {
 		method = "HEAD"
-	default:
-		method = "GET"
+	} else if len(formParams) > 0 {
+		method = "POST"
+	}
+
+	// Parse form data
+	var formDataSlice []formData
+	for _, param := range formParams {
+		parts := strings.SplitN(param, "=", 2)
+		if len(parts) != 2 {
+			fmt.Printf("Invalid form data: %s\n", param)
+			return
+		}
+		name := parts[0]
+		value := parts[1]
+
+		if strings.HasPrefix(value, "@") {
+			formDataSlice = append(formDataSlice, formData{name: name, filename: value[1:]})
+		} else {
+			formDataSlice = append(formDataSlice, formData{name: name, value: value})
+		}
+	}
+
+	// Create multipart form data if -F flag is used
+	var requestBody bytes.Buffer
+	var contentType string
+	if len(formDataSlice) > 0 {
+		requestBody, contentType, err = createMultipartFormData(formDataSlice)
+		if err != nil {
+			fmt.Printf("Error creating multipart form data: %s\n", err)
+			return
+		}
 	}
 
 	// Build the request headers
@@ -232,6 +314,12 @@ func main() {
 			"Host: %s\r\n"+
 			"User-Agent: %s\r\n"+
 			"Accept: */*\r\n", method, hostname, *userAgent)
+
+	// Add Content-Type and Content-Length for multipart form data
+	if len(formDataSlice) > 0 {
+		requestHeaders += fmt.Sprintf("Content-Type: %s\r\n", contentType)
+		requestHeaders += fmt.Sprintf("Content-Length: %d\r\n", requestBody.Len())
+	}
 
 	// Add cookies if provided
 	if *cookies != "" {
@@ -259,8 +347,17 @@ func main() {
 
 	_, err = conn.Write([]byte(requestHeaders))
 	if err != nil {
-		fmt.Println("Failed to send request:", err)
+		fmt.Println("Failed to send request headers:", err)
 		return
+	}
+
+	// Send the form data if present
+	if len(formDataSlice) > 0 {
+		_, err = conn.Write(requestBody.Bytes())
+		if err != nil {
+			fmt.Println("Failed to send form data:", err)
+			return
+		}
 	}
 
 	var response strings.Builder

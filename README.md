@@ -41,9 +41,17 @@ default
 ./main -k https://www.keycdn.com
 ```
 
--O
+-H
 ```
-./main -O https://nodejs.org/dist/v18.17.0/node-v18.17.0-linux-x64.tar.xz
-tar -xf node-v18.17.0-linux-x64.tar.xz
-ls node-v18.17.0-linux-x64/
+./main -H "X-Custom-Header: Value" -H "Authorization: Bearer token" http://example.com
+```
+
+-u
+```
+./main -u username:password http://example.com
+```
+
+-F
+```
+./main -F "name=John" -F "file=@/path/to/file.txt" http://example.com/upload
 ```
