@@ -24,6 +24,8 @@ const (
 	colorWhite  = "\033[37m"
 )
 
+type stringSliceFlag []string
+
 func writeHeadersToFile(filename, headers string) error {
 	file, err := os.Create(filename)
 	if err != nil {
@@ -67,6 +69,7 @@ func printFlagTable() {
 		{"-m", "<int>", "Maximum time allowed for the operation in seconds"},
 		{"-D", "<string>", "Write the response headers to the specified file"},
 		{"-X", "<string>", "Specify custom request method"},
+		{"-H", "<string>", "Pass custom header(s) to server"},
 		{"--cookie", "<string>", "Send the specified cookies with the request"},
 		{"--connect-timeout", "<int>", "Maximum time allowed for connection"},
 	}
@@ -95,6 +98,15 @@ func printFlagTable() {
 	}
 }
 
+func (s *stringSliceFlag) String() string {
+	return strings.Join(*s, ", ")
+}
+
+func (s *stringSliceFlag) Set(value string) error {
+	*s = append(*s, value)
+	return nil
+}
+
 func main() {
 	userAgent := flag.String("a", "GolangHTTPClient/1.0", "Specify the User-Agent string")
 	certFile := flag.String("E", "", "Specify the client certificate file for HTTPS")
@@ -104,6 +116,8 @@ func main() {
 	timeout := flag.Int("m", 0, "Maximum time allowed for the operation in seconds")
 	headerFile := flag.String("D", "", "Write the response headers to the specified file")
 	customMethod := flag.String("X", "", "Specify custom request method")
+	var headers stringSliceFlag
+	flag.Var(&headers, "H", "Pass custom header(s) to server")
 	cookies := flag.String("cookie", "", "Send the specified cookies with the request")
 	connectTimeout := flag.Int("connect-timeout", 0, "Maximum time allowed for the connection to be established in seconds")
 
@@ -219,6 +233,11 @@ func main() {
 	// Add cookies if provided
 	if *cookies != "" {
 		requestHeaders += fmt.Sprintf("Cookie: %s\r\n", *cookies)
+	}
+
+	// Add custom headers
+	for _, header := range headers {
+		requestHeaders += fmt.Sprintf("%s\r\n", header)
 	}
 
 	// Close the connection
