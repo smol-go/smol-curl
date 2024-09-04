@@ -426,12 +426,6 @@ func main() {
 		}
 	}
 
-	if *verbose {
-		fmt.Println("Received response:")
-	}
-	fmt.Println(response.String())
-	fmt.Println(strings.Repeat("-", 50))
-
 	if *outputFile != "" {
 		file, err := os.Create(*outputFile)
 		if err != nil {
@@ -446,5 +440,11 @@ func main() {
 		}
 
 		fmt.Printf("Response saved to file: %s\n", *outputFile)
+	} else {
+		if *verbose {
+			fmt.Println("Received response:")
+		}
+		fmt.Println(response.String())
+		fmt.Println(strings.Repeat("-", 50))
 	}
 }
