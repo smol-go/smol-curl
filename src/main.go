@@ -77,6 +77,7 @@ func printFlagTable() {
 		{"-v", "<bool>", "Make the request more detailed"},
 		{"-m", "<int>", "Maximum time allowed for the operation in seconds"},
 		{"-u", "<string>", "Specify the user name and password for server authentication"},
+		{"-o", "<string>", "Write the response body to the specified file"},
 		{"-d", "<string>", "HTTP POST data"},
 		{"-I", "<bool>", "Send HTTP HEAD request instead of GET"},
 		{"-E", "<string>", "Specify the client certificate file for HTTPS"},
@@ -169,6 +170,7 @@ func main() {
 	verbose := flag.Bool("v", false, "Make the request more detailed")
 	timeout := flag.Int("m", 0, "Maximum time allowed for the operation in seconds")
 	userAuth := flag.String("u", "", "Specify the user name and password for server authentication")
+	outputFile := flag.String("o", "", "Write the response body to the specified file")
 
 	var postData stringSliceFlag
 	flag.Var(&postData, "d", "HTTP POST data")
@@ -429,4 +431,20 @@ func main() {
 	}
 	fmt.Println(response.String())
 	fmt.Println(strings.Repeat("-", 50))
+
+	if *outputFile != "" {
+		file, err := os.Create(*outputFile)
+		if err != nil {
+			fmt.Printf("Failed to create output file: %v\n", err)
+			return
+		}
+		defer file.Close()
+
+		_, err = file.WriteString(response.String())
+		if err != nil {
+			fmt.Printf("Failed to write response to file: %v\n", err)
+		}
+
+		fmt.Printf("Response saved to file: %s\n", *outputFile)
+	}
 }
