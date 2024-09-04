@@ -41,6 +41,11 @@ default
 ./main -k https://www.keycdn.com
 ```
 
+-d
+```
+./main -d "name=John" -d "age=30" http://example.com/form
+```
+
 -H
 ```
 ./main -H "X-Custom-Header: Value" -H "Authorization: Bearer token" http://example.com
@@ -55,3 +60,4 @@ default
 ```
 ./main -F "name=John" -F "file=@/path/to/file.txt" http://example.com/upload
 ```
+Note that if both -F and -d flags are used, the -F flag takes precedence, and the request will be sent as multipart/form-data.
