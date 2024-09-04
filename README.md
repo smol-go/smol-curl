@@ -14,7 +14,7 @@ To run the program, use the following syntax:
 ./main [options] <URL>
 ```
 
-### generate certificates required for -E flag
+### Generate certificates required for -E flag
 ```
 # Generate a private key
 openssl genpkey -algorithm RSA -out client-key.pem
