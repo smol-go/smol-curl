@@ -89,7 +89,7 @@ func printFlagTable() {
 		{"--connect-timeout", "<int>", "Maximum time allowed for connection"},
 	}
 
-	columnWidths := []int{20, 10, 50}
+	columnWidths := []int{20, 10, 60}
 	for i, row := range table {
 		for j, cell := range row {
 			if i == 0 {
@@ -108,7 +108,7 @@ func printFlagTable() {
 		}
 		fmt.Println()
 		if i == 0 {
-			fmt.Println(strings.Repeat("-", 85))
+			fmt.Println(strings.Repeat("-", 95))
 		}
 	}
 }
