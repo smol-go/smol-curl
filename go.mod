@@ -1,3 +1,3 @@
-module github.com/themillenniumfalcon/smol-curl
+module github.com/smol-go/smol-curl
 
-go 1.22.5
+go 1.23.2

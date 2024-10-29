@@ -6,3 +6,7 @@ client-cert.pem
 client-key.pem
 client-req.pem
 client.pem
+
+# builds
+smolcurl
+dist
