@@ -6,7 +6,7 @@ A minimal clone of cURL
 
 To build the program, use the following command:
 ```
-go build src/main.go
+go build main.go
 ```
 
 To run the program, use the following syntax:
