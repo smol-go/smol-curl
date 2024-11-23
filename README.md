@@ -112,8 +112,3 @@ cat client-key.pem client-cert.pem > client.pem
 - The -k flag is useful when dealing with servers that have self-signed or otherwise invalid SSL certificates.
 - The -D and -o flags can be used together to save both headers and body separately.
 - If both -F and -d flags are used, the -F flag takes precedence, and the request will be sent as multipart/form-data.
-
-### Building `smol-curl` from scratch
-- Run `git clone https://github.com/smol-go/smol-curl`
-- Run `make build`
-- For cross-platform builds, run `make build-all` (optional)
